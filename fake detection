@@ -1,0 +1,125 @@
+# =====================================
+# FAKE NEWS DETECTION PROJECT (ROBUST VERSION)
+# =====================================
+
+print("Program Started...\n")
+
+import pandas as pd
+import re
+import string
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+
+# ========= FILE PATHS =========
+fake_path = r'C:\Users\vikas\OneDrive\Attachments\Desktop\ms project\archive\fake1.csv'
+true_path = r'C:\Users\vikas\OneDrive\Attachments\Desktop\ms project\archive\true1.csv'
+
+# ========= SAFE CSV LOADING =========
+try:
+    d_fake = pd.read_csv(fake_path, encoding='latin1', engine='python', on_bad_lines='skip')
+    d_true = pd.read_csv(true_path, encoding='latin1', engine='python', on_bad_lines='skip')
+    print("CSV files loaded successfully.\n")
+except Exception as e:
+    print("Error loading CSV:", e)
+    exit()
+
+print("Fake Columns:", d_fake.columns)
+print("True Columns:", d_true.columns, "\n")
+
+# ========= ENSURE TEXT COLUMN EXISTS =========
+if "text" not in d_fake.columns or "text" not in d_true.columns:
+    print("ERROR: 'text' column not found in dataset.")
+    exit()
+
+# Remove Reuters text safely
+d_true["text"] = d_true["text"].astype(str).str.replace("(Reuters)", "", regex=True)
+
+# Add labels
+d_fake["target"] = 0
+d_true["target"] = 1
+
+# Drop unnecessary columns safely
+d_fake = d_fake.drop(columns=["title", "subject", "date"], errors="ignore")
+d_true = d_true.drop(columns=["title", "subject", "date"], errors="ignore")
+
+# Combine datasets
+df = pd.concat([d_fake, d_true], axis=0)
+df = df.sample(frac=1, random_state=42).reset_index(drop=True)
+
+print("Dataset Combined Successfully.\n")
+
+# ========= TEXT CLEANING =========
+def clean_text(text):
+    text = str(text).lower()
+    text = re.sub(r'\W', ' ', text)
+    text = re.sub(r'\d', '', text)
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    return text
+
+df["text"] = df["text"].apply(clean_text)
+
+print("Text Cleaning Completed.\n")
+
+# ========= TRAIN TEST SPLIT =========
+X = df["text"]
+y = df["target"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# ========= TF-IDF =========
+vectorizer = TfidfVectorizer(stop_words='english')
+Xv_train = vectorizer.fit_transform(X_train)
+Xv_test = vectorizer.transform(X_test)
+
+print("Vectorization Completed.\n")
+
+# ========= MODEL TRAINING =========
+lr = LogisticRegression(max_iter=1000)
+lr.fit(Xv_train, y_train)
+
+dtc = DecisionTreeClassifier(random_state=42)
+dtc.fit(Xv_train, y_train)
+
+gbc = GradientBoostingClassifier(random_state=42)
+gbc.fit(Xv_train, y_train)
+
+rfc = RandomForestClassifier(random_state=42)
+rfc.fit(Xv_train, y_train)
+
+print("Models Trained Successfully.\n")
+
+# ========= MODEL ACCURACY =========
+print("Model Accuracy:\n")
+
+print("Logistic Regression:", accuracy_score(y_test, lr.predict(Xv_test)))
+print("Decision Tree:", accuracy_score(y_test, dtc.predict(Xv_test)))
+print("Gradient Boosting:", accuracy_score(y_test, gbc.predict(Xv_test)))
+print("Random Forest:", accuracy_score(y_test, rfc.predict(Xv_test)))
+
+# ========= SAMPLE PREDICTION =========
+print("\nTesting Sample News...\n")
+
+sample_news = "Government announces new policy for economic growth"
+sample_clean = clean_text(sample_news)
+vector = vectorizer.transform([sample_clean])
+
+print("Logistic Regression:",
+      "Fake News" if lr.predict(vector)[0] == 0 else "Not Fake News")
+
+print("Decision Tree:",
+      "Fake News" if dtc.predict(vector)[0] == 0 else "Not Fake News")
+
+print("Gradient Boosting:",
+      "Fake News" if gbc.predict(vector)[0] == 0 else "Not Fake News")
+
+print("Random Forest:",
+      "Fake News" if rfc.predict(vector)[0] == 0 else "Not Fake News")
+
+print("\nProgram Finished Successfully.")
