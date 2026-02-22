@@ -82,3 +82,46 @@ Each dataset contains:
 ---
 
 ## 📈 Example Output
+
+---
+
+## 🧠 Key Concepts Used
+
+- Natural Language Processing (NLP)
+- TF-IDF
+- Supervised Machine Learning
+- Classification Algorithms
+- Model Evaluation
+
+---
+
+## ▶️ How to Run the Project
+
+1. Install dependencies:
+
+
+2. Place `fake1.csv` and `true1.csv` in your project directory.
+
+3. Run the Python file: 
+---
+
+## 🎯 Future Improvements
+
+- Add Stopwords removal
+- Add Lemmatization
+- Use Voting Classifier
+- Save best model using Joblib
+- Convert to Flask Web Application
+- Add GUI Interface
+
+---
+
+## 📌 Author
+
+Developed by: **Sekar**
+
+---
+
+## ⭐ If You Like This Project
+
+Give this repository a ⭐ on GitHub!
